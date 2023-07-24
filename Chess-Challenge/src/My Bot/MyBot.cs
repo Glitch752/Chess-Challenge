@@ -11,6 +11,7 @@ public class MyBot : IChessBot {
 
     public Move Think(Board board, Timer timer) {
         isPlayingWhite = board.IsWhiteToMove;
+
         Move move = PickMove(board, timer.MillisecondsRemaining > 25000 ? 8 : 6);
         // Add to lastReachedPositions
         board.MakeMove(move);
@@ -46,6 +47,10 @@ public class MyBot : IChessBot {
                 alpha = value;
                 bestMove = move;
             }
+        }
+
+        if(bestMove.IsNull) {
+            bestMove = moves[0];
         }
 
         // Console.WriteLine(alpha);
@@ -122,28 +127,34 @@ public class MyBot : IChessBot {
 
     public int Evaluate(Board board) {
         // 1 if the optimizing side is to move, -1 if the minimizing side is to move
-        int sideMultiplier = isPlayingWhite ? 1 : -1;
         // Mobility calculations
-        int value = 15 * board.GetLegalMoves().Length + 30 * board.GetLegalMoves(true).Length * sideMultiplier;
+        int value = 5 * board.GetLegalMoves().Length + 10 * board.GetLegalMoves(true).Length;
         if(board.TrySkipTurn()) {
-            value -= 15 * board.GetLegalMoves().Length + 30 * board.GetLegalMoves(true).Length * sideMultiplier;
+            value -= 5 * board.GetLegalMoves().Length + 10 * board.GetLegalMoves(true).Length;
+
+            if(board.IsInCheckmate()) {
+                value += 100000;
+            }
+            if(board.IsInCheck()) {
+                value += -150;
+            }
             board.UndoSkipTurn();
         }
 
         // White pawns, White knights, White bishops, White rooks, White queens, White king, Black pawns, Black knights, Black bishops, Black rooks, Black queens, Black king
         PieceList[] pieces = board.GetAllPieceLists();
-        int[] pieceValues = new int[6] { 100, 200, 230, 500, 900, 5000 };
-        for(int i = 0; i < 12; i++) {
-            value += pieces[i].Count * (i >= 6 ? -pieceValues[i - 6] : pieceValues[i]) * sideMultiplier;
+        int[] pieceValues = new int[12] { 100, 200, 230, 500, 900, 5000, -100, -200, -230, -500, -900, -5000 };
+        for (int i = 0; i < 12; i++) {
+            value += pieces[i].Count * pieceValues[i];
         }
 
         if (board.IsInCheckmate()) {
-            value += 100000 * sideMultiplier;
+            value -= 100000;
         }
         if(board.IsInCheck()) {
-            value += -150 * sideMultiplier;
+            value -= -150;
         }
 
-        return value;
+        return value * (board.IsWhiteToMove ? 1 : -1);
     }
 }
