@@ -32,13 +32,6 @@ public class MyBot : IChessBot {
                 depth - DepthExtension(board),
                 board
             );
-            // If in lastReachedPositions, halve the value
-            for(int i = 0; i < lastReachedPositions.Length; i++) {
-                if (lastReachedPositions[i] == board.ZobristKey) {
-                    value /= 2;
-                    break;
-                }
-            }
             board.UndoMove(move);
             if(value > alpha) {
                 alpha = value;
@@ -123,17 +116,18 @@ public class MyBot : IChessBot {
     }
 
     public int Evaluate(Board board) {
-        // 1 if the optimizing side is to move, -1 if the minimizing side is to move
         // Mobility calculations
-        int value = 5 * board.GetLegalMoves().Length + 10 * board.GetLegalMoves(true).Length;
+        int value = 4 * board.GetLegalMoves().Length + 8 * board.GetLegalMoves(true).Length;
         if(board.TrySkipTurn()) {
-            value -= 5 * board.GetLegalMoves().Length + 10 * board.GetLegalMoves(true).Length;
+            value -= 4 * board.GetLegalMoves().Length + 8 * board.GetLegalMoves(true).Length;
 
             if(board.IsInCheckmate()) {
                 value += 100000;
             }
-            if(board.IsInCheck()) {
-                value += -150;
+            if (board.IsInCheck()) {
+                value += 150;
+            } else if(board.GetLegalMoves().Length == 0) {
+                value += 2000;
             }
             board.UndoSkipTurn();
         }
@@ -149,9 +143,20 @@ public class MyBot : IChessBot {
             value -= 100000;
         }
         if(board.IsInCheck()) {
-            value -= -150;
+            value -= 150;
+        } else if (board.GetLegalMoves().Length == 0) {
+            value += 2000;
         }
 
+        // If in lastReachedPositions, halve the value
+        for (int i = 0; i < lastReachedPositions.Length; i++) {
+            if (lastReachedPositions[i] == board.ZobristKey) {
+                value /= 2;
+                break;
+            }
+        }
+
+        // 1 if the optimizing side is to move, -1 if the minimizing side is to move
         return value * (board.IsWhiteToMove ? 1 : -1);
     }
 }
