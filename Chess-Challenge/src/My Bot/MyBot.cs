@@ -3,15 +3,12 @@ using System;
 using System.Collections.Generic;
 
 public class MyBot : IChessBot {
-    public bool isPlayingWhite;
     // Transposition table
     Dictionary<ulong, int> transpositionTable = new Dictionary<ulong, int>();
     Dictionary<ulong, int> quiesceTable = new Dictionary<ulong, int>();
     ulong[] lastReachedPositions = new ulong[20];
 
     public Move Think(Board board, Timer timer) {
-        isPlayingWhite = board.IsWhiteToMove;
-
         Move move = PickMove(board, timer.MillisecondsRemaining > 25000 ? 8 : 6);
         // Add to lastReachedPositions
         board.MakeMove(move);
