@@ -126,7 +126,7 @@ public class MyBot : IChessBot {
             }
             if (board.IsInCheck()) {
                 value += 150;
-            } else if(board.GetLegalMoves().Length == 0) {
+            } else if(board.IsDraw()) {
                 value += 2000;
             }
             board.UndoSkipTurn();
@@ -144,7 +144,7 @@ public class MyBot : IChessBot {
         }
         if(board.IsInCheck()) {
             value -= 150;
-        } else if (board.GetLegalMoves().Length == 0) {
+        } else if (board.IsDraw()) {
             value += 2000;
         }
 
